@@ -4,6 +4,7 @@ from rest_framework.response import Response
 
 from .models import Task
 from .serializers import TaskSerializer
+import json
 
 # Create your views here.
 
@@ -53,7 +54,9 @@ def taskDetail(request, pk):
 
 @api_view(['POST'])
 def taskAdd(request):
-    serializer = TaskSerializer(data=request.data)
+    # here be dragons
+    print(request.body.decode('utf-8'))
+    serializer = TaskSerializer(data=json.loads(request.body.decode('utf-8')))
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
@@ -63,7 +66,7 @@ def taskAdd(request):
 @api_view(['POST'])
 def taskUpdate(request, pk):
     task = Task.objects.get(id=pk)
-    serializer = TaskSerializer(instance=task, data=request.data)
+    serializer = TaskSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
@@ -80,8 +83,9 @@ def taskDelete(request, pk):
 @api_view(['POST'])
 def taskComplete(request, pk):
     task = Task.objects.get(id=pk)
-    task.completed = True
-    serializer = TaskSerializer(instance=task, data=task.serialize())
+    serializer = TaskSerializer(
+        instance=task, data=json.loads(request.body.decode('utf-8')))
     if serializer.is_valid():
         serializer.save()
-    return Response(serializer.data)
+        return Response(serializer.data)
+    return Response('INVALID DATA')
